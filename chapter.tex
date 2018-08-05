@@ -1,0 +1,690 @@
+%------------------------------------------------------------------------------
+\chapter{Git\index{git}}
+\label{sec:share000.git}
+%------------------------------------------------------------------------------
+\section{Introduction}
+%------------------------------------------------------------------------------
+\label{sec:share000.git.introduction}
+
+From WikiPedia:
+\begin{quote}
+Git is a distributed revision control and source code management (SCM) system
+with an emphasis on speed. Git was initially designed and developed by Linus
+Torvalds for Linux kernel development in 2005. Every Git working directory is
+a full-fledged repository with complete history and full version tracking
+capabilities, not dependent on network access or a central server.
+\end{quote}
+
+\noindent
+Git was chosen because it is available on Windows as well as on Linux. Git
+shows a lot of flexibility for open source development. And git has a build-in
+mechanism for submodules. We will be using submodules for:
+\begin{itemize*}
+\item interfaces
+\item units (implementation)
+\item modules (composition of units and/or modules)
+\item sources of documents and figures
+\item external tools such as (text) compilers and git
+\item external libraries and document
+\end{itemize*}
+
+\noindent
+Some terminology:
+\begin{description}
+\item[\ix{repository}] A git repository contains, among other things, a set of
+      commit objects and a set of references to commit objects, called heads.
+      The git repository is stored in the same directory as the project itself,
+      in a subdirectory called !.git!. Note that, in some way, commits
+      represent a version, and such a commit typically spans multiple files.
+      Git does not version files (separately). A checked out commit is version
+      wise always consistent, i.e. all working files are of the same version.
+\item[\ix{submodule}] A git submodule exists within one repository and refers
+      to an other repository. The containing repository only maintains an URL
+      and version, so the containing repository does \emph{not} contain (a
+      copy of) the commits of the other repository. When a repository has
+      multiple submodules, the repository itself is responsible for combining
+      appropriate versions of its submodules. This freedom allows us to have
+      separate version control over e.g. an interface and one of its
+      implementations.
+\item[\ix{stem (repository)}] Stem repository is not a git term. In this
+      project, a repository that contains submodules is called the stem
+      repository. As we don't have submodules within submodules in this project
+      (a design decision), a repository is either a submodule or a stem.
+\item[\ix{archive}] Archive is not a git term, it is defined specifically for
+      this project. An archive is in implementation a flat collection of
+      repositories. This collection typically contains submodules and at least
+      one stem.
+\end{description}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%\begin{figure}
+%\begin{center}
+%\begin{asy}
+%// define nodes
+%node class_Archive   =uml_class("Archive");
+%node class_Repository=uml_class("Repository");
+%node class_Stem      =uml_class("Stem");
+%node class_Submodule =uml_class("Submodule");
+%
+%// dock, flush and draw nodes
+%real hu=0.5cm;
+%real vu=0.5cm;
+%// next to each other, center aligned
+%node c1=hdock(2hu, class_Stem, class_Submodule);
+%// above each other, center at class_Repository
+%node c2=vdock(3vu, centerat=0, class_Repository, c1);
+%// next to each other, top aligned
+%node cc=hdock(2hu, class_Archive, c2);
+%// draw classes
+%cc @ refresh @ deepdraw;
+%
+%// draw edges
+%(class_Archive--class_Repository)             .style(uml_aggregation).draw();
+%(class_Repository--VHVd(2vu)--class_Stem)     .style(uml_inheritance).draw();
+%(class_Repository--VHVd(2vu)--class_Submodule).style(uml_inheritance).draw();
+%(class_Stem--class_Submodule)                 .style(uml_associate_d).draw();
+%
+%// label
+%label("*",class_Repository^W,NW);
+%label("*",class_Stem^E,SE);
+%label("*",class_Submodule^W,NW);
+%\end{asy}
+%\caption{An archive consists of multiple repositories}\label{fig:git.archive}
+%\end{center}
+%\end{figure}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a good overview and/or a good introduction into git see \cite{Chacon}.
+\cite{Chacon} is a book that a kind of covers all. The following sections are
+more focused on how git is used in this project. Git can be used in many
+different ways, and choices have been made to come to a single way of working.
+An example of such a choice is that we will be using submodules.
+
+%------------------------------------------------------------------------------
+\section{Getting started; cloning an archive \label{sec:git.start}}
+%------------------------------------------------------------------------------
+
+First you need to be able to connect to the ubuntu server.
+
+\begin{enumerate*}
+\item click windows start button
+\item Paste the following line in the search box and press enter:\\
+      !notepad c:\Windows\System32\Drivers\etc\hosts!
+\item Add the following line to the hosts file and save the file:\\
+      !130.139.165.20 ubuntu!
+\end{enumerate*}
+
+Test the network connection with the ubuntu git server:
+
+\begin{enumerate*}
+\item Start a dos command prompt and type:
+      !ping ubuntu!
+\item The connection is OK when you receive replies.
+\end{enumerate*}
+
+Set-up your identity for ssh contact with git server:
+
+\begin{enumerate*}
+\item Start a dos command prompt and navigate to the directory: !C:\Users\<your-user-id>\!
+\item !mkdir .ssh!\\
+      Note: for some reason creating directory !.ssh! does not work using windows explorer
+\item See files attached to this E-mail, copy the two files to your !.ssh! directory
+\item Create in the same !.ssh! directory a file !config! (without extension)
+\item Add the following two lines to this file:\\
+      !Host ubuntu!
+      !IdentityFile ~/.ssh/id_rsa_ubuntu_git_<your_name>_delete_after_hackaton!
+\end{enumerate*}
+
+Flying start:
+
+\begin{enumerate*}
+\item Create or reuse a (sub)directory !projects! (required)
+\item Create or reuse within this directory a subdirectory !flying_start! (required)
+\item Unzip the attached zip-file in the !flying_start! subdirectory.
+\item Execute all executables; be prepared to enter your full name once (for git commit messages)\\
+      Note: the first takes longer because the others don't need to transport the !share000! stem
+\item Check the last message in the command prompt; when it is !done!, then you succeeded
+\item When the !projects! directory has new subdirectories !share000! and !hackaton-x!, then it succeeded.
+\end{enumerate*}
+
+%------------------------------------------------------------------------------
+\section{Getting started with some work \label{sec:git.start2}}
+%------------------------------------------------------------------------------
+
+You can start a git shell with the !git-bash.bat! in the stem of your archive.
+Suppose you want to do some work, then you must first start with:
+
+\begin{enumerate*}
+\item !cd <stem>!
+\item !./gs checkout master!
+\item !./gs fetch!
+\item !./gs rebase origin/master!
+\item !./gs checkout -b my_work!
+\end{enumerate*}
+
+Otherwise you are working in a deteched head state, which is not very suitable for
+development. You may choose other names for !my_work! which describe your work better,
+but it has to be a single word.
+
+If you wish to change the name later on, you can use the command:
+
+\begin{enumerate*}
+\item !gs branch -m <newname>!
+\end{enumerate*}
+
+%------------------------------------------------------------------------------
+\section{The state of your local repositories}
+%------------------------------------------------------------------------------
+
+Three commands are very useful for showing the state of your repositories:
+
+\index{git branch}
+\index{git status -s}
+\index{git log}
+
+\begin{lstlisting}[language=]
+git branch
+git status -s
+git log
+\end{lstlisting}
+
+\noindent
+The first command gives an overview of all existing branches. The branch which
+is currently active is prefixed with an asterisk. The second command lists all
+changes and the state of the file. The last command lists the last commits.
+
+You can change branch with the command:
+
+\begin{lstlisting}[language=]
+./gs checkout <existing branch name>
+\end{lstlisting}
+
+You can create a copy of your current branch with
+
+\begin{lstlisting}[language=]
+./gs checkout -b <new branch name>
+\end{lstlisting}
+
+%------------------------------------------------------------------------------
+\section{Making changes \label{sec:git.changing}}
+%------------------------------------------------------------------------------
+
+First check what branch you are working on; you probably want to work on
+!my_work! and not on the !master!. Then you can simply start editing source
+files. Git will keep track of the changed source files. You can list them with:
+
+\begin{lstlisting}[language=]
+gs status -s
+\end{lstlisting}
+
+\noindent
+To add files files for the next commit, you will use the command:
+
+\index{git add ...}
+
+\begin{lstlisting}[language=]
+git add <file 1> ... <file n>
+\end{lstlisting}
+
+\noindent
+The actual commit (after having tested the changes) is as follows:
+
+\index{git commit -m "..."}
+
+\begin{lstlisting}[language=]
+git commit -m "<The commit message>"
+\end{lstlisting}
+
+\noindent
+Now this commit is under source control, in you own repository. You can
+continue testing and make further changes. When new changes must be added use
+the !git add! command again, when the commit needs to be updated with the new
+changes, use the command:
+
+\index{git commit --amend}
+
+\begin{lstlisting}[language=]
+git commit --amend
+\end{lstlisting}
+
+\noindent
+Now the combination of all changes is stored in a single commit. This is
+important, because now the reviewer is no longer confronted with all former
+coding attempts, the reviewer will only see the final combined commit.
+
+Note that (your) changes still only exist in your repository. So now the
+changes need to be presented for review.
+
+%------------------------------------------------------------------------------
+\section{Push your work to the central archive}
+%------------------------------------------------------------------------------
+
+Dit is me nu even te risicovol om dat in een keer op te schrijven. Volgt later ... helaas.
+
+%------------------------------------------------------------------------------
+\section{Receiving updates, rebase}
+%------------------------------------------------------------------------------
+
+When the central archive has changed you need to synchronize every now and
+then. The changes in that central archive may be changes of others, but also
+your own changes are included. When you do not have any work in progress, then
+you can start all over again as described in \S\ref{sec:git.start}
+p\pageref{sec:git.start}. But more likely, you do have work in progress.
+
+So what you need is a utility that reverts your local archive to the version
+you started with, then apply all changes from the central archive, and then
+apply your local work in progress. This utility is called !rebase!.
+
+But first you need to fetch the current state of the central archive. This can
+be done with the command:
+
+\index{git fetch}
+
+\begin{lstlisting}[language=]
+./gs fetch
+\end{lstlisting}
+
+\noindent
+Note that this is one of the very few commands that require you to be connected
+to the internet. After a !git fetch!, the latest changes were obtained from the
+remote repositories, and these changes are stored in your local git
+repositories. But the !git fetch! did not apply any commit yet on any of your
+branches. To apply those commits on your current branch, you need to do the
+following:
+
+\index{git rebase origin/master}
+
+\begin{lstlisting}[language=]
+./gs rebase origin/master
+\end{lstlisting}
+
+A rebase may result in merge conflicts. In such a case you must resolve those
+conflicts and then continue the rebase. When you expect conflicts (typically on
+a repository with work in progress), then you could do a !git rebase! on the
+repository instead of a !./gs rebase! on the archive.
+
+In cases of a merge conflict, read the instructions given by git carefully.
+!git status -s! will (also) list all files that need to be merged.
+Note additionally, that your branch will be 'detached head', until you have
+performed a !rebase --continue! or !rebase --abort!.
+
+%------------------------------------------------------------------------------
+\section{Set your changes aside for a short while}
+%------------------------------------------------------------------------------
+
+You may have made a few changes, but you should have done a rebase before,
+or you may have done some changes, but should have done them on another branch.
+In these case, at least when you didn't commit your change yet, you can easily
+set your changes aside with:
+
+\index{git stash}
+
+\begin{lstlisting}[language=]
+git stash
+\end{lstlisting}
+
+\noindent
+When you perform a !git status -s! you will see no pending changes. The working
+files returned to the version of the last commit.
+
+Now you can e.g. perform a rebase or change branch. Then you can apply your
+changes again with:
+
+\index{git stash pop}
+
+\begin{lstlisting}[language=]
+git stash pop
+\end{lstlisting}
+
+%------------------------------------------------------------------------------
+\section{Reverting git actions}
+%------------------------------------------------------------------------------
+
+%..............................................................................
+\subsection{Reverting an edit}
+
+Suppose that you made changes to files, but you want to revert to the version
+you started with, for those files. Also suppose that you did not !add! these
+files yet. In this case you can undo all your edits with:
+
+\index{git checkout ...}
+
+\begin{lstlisting}[language=]
+git checkout <file 1> <file 2> ...
+\end{lstlisting}
+
+%..............................................................................
+\subsection{Undo add}
+
+Suppose you added a file for a future commit, but you want to undo this !add!.
+Use
+
+\index{git reset ...}
+
+\begin{lstlisting}[language=]
+git reset <file 1> <file 2> ...
+\end{lstlisting}
+
+%..............................................................................
+\subsection{Revert, amend or squash a commit}
+
+Suppose you committed, but you want to revert the commit, but keep all the
+changes.
+
+\index{git reset HEAD~1}
+
+\begin{lstlisting}[language=]
+git reset HEAD~1
+\end{lstlisting}
+
+\noindent
+Suppose you committed, but you want to git rid of all changes in that commit.
+Then use:
+
+\index{git reset --hard HEAD~1}
+
+\begin{lstlisting}[language=]
+git reset --hard HEAD~1
+\end{lstlisting}
+
+\noindent
+Suppose you committed, but you want to make more changes, and add them to the
+commit. In this case simply make those changes and !add! them, and then use:
+
+\begin{lstlisting}[language=]
+git commit --amend
+\end{lstlisting}
+
+\noindent
+Note that amending a commit is very common. Often, you need to make some
+additional changes after e.g. finding issues after a test or e.g. when you
+receive review comments. It is good practice to combine all changes that belong
+to a single task. So don't forget the !--amend! option.
+
+Then it is possible that you created multiple commits, but afterwards you
+realize that those commits all belong to the same task. In that case you can
+combine those commits in a single commit. This is called squashing. Supposing
+you want to combine three commits, then use:
+
+\index{git rebase --interactive HEAD~...}
+
+\begin{lstlisting}[language=]
+git rebase --interactive HEAD~3
+\end{lstlisting}
+
+\noindent
+This command will come up with an editor which will list 3 commits. Of commits
+2 and 3, change the !pick! into !s!. Then save and close the file. Now commits
+2 and 3 are squashed into 1. It is advisable to check the internet about this
+command and inform yourself about how this command works, when you do this for
+the very first time.
+
+%------------------------------------------------------------------------------
+\section{Working with branches}
+%------------------------------------------------------------------------------
+
+Once you are used to it, branches are a convenient way to manage features,
+issues or aspects. Let's suppose you are working on a 'larger' task, and that
+work is to be developed in the branch !my_work!. You can create such a branch
+in the following way:
+
+\begin{lstlisting}[language=]
+cd <stem>
+./gs checkout master
+./gs fetch
+./gs rebase origin/master
+./gs checkout -b my_work
+\end{lstlisting}
+
+\noindent
+The first three statements will make the !master! branch active, and assure
+that you have the latest version. The last statement creates a new branch
+called !my_work! with an identical content to the master. By using the !./gs!
+command (i.s.o. !git!), for the stem and all submodules a branch is created.
+
+Now suppose you intend to start with some feature. Possibly you decide later on
+not to include this feature, or to implement it differently, and therefore you
+want to be able apply and revert this attempt later on. Then you can create
+you own feature branch:
+
+\begin{lstlisting}[language=]
+cd <relevant submodule>
+git checkout my_work
+git checkout -b my_feature
+\end{lstlisting}
+
+\noindent
+Now, for a specific submodule a !my_feature! branch is created. You can do your
+work and !add! and !commit! as described in \S\ref{sec:git.changing}
+p\pageref{sec:git.changing}. After that, you can merge your commit(s) back into
+the !my_work! branch:
+
+\begin{lstlisting}[language=]
+git checkout my_work
+git merge my_feature
+\end{lstlisting}
+
+%------------------------------------------------------------------------------
+\section{Install Git for Windows\label{sec:git.install.win}}
+%------------------------------------------------------------------------------
+
+\begin{enumerate*}
+\item Navigate to the "git" directory
+\item Right click !Git-1.9.2-preview20140411.exe! and select "run as
+      administrator"
+\item Next
+\item Next
+\item Next
+\item Folder: !C:\Program Files (x86)\Git!
+\item Next
+\item unselect all components
+\item Next
+\item Next
+\item Use Git from GitBash only
+\item Next
+\item Checkout as-is, commit as-is
+\item Next
+\item Finish
+\item Open !Git Bash! (Windows button | all programs | git)
+\item type:\\ 
+      !git config --global user.name "John Doe"! \\
+      !git config --global user.email johndoe@example.com! \\
+      !git config --global push.default simple!
+\end{enumerate*}
+
+\noindent
+As we will be using submodules, the following bash script may be handy:
+
+\index{gs}
+\begin{lstlisting}[frame=trBL,
+   float,
+   language=,
+   caption={gs, a git script for submodules as we use it},
+   label={lst:git.gs}]
+#!/bin/bash
+echo @ gs: git submodule foreach git $1 $2 $3 $4 $5 $6 $7 $8 $9
+git submodule foreach git $1 $2 $3 $4 $5 $6 $7 $8 $9
+echo @ gs: git $1 $2 $3 $4 $5 $6 $7 $8 $9
+git $1 $2 $3 $4 $5 $6 $7 $8 $9
+\end{lstlisting}
+
+\noindent
+Save this script in the stem of your archive, under the name !gs!. 
+This script can only be executed in the stem.
+It will execute a !git! command with all parameters in every
+submodule and after that it will execute !git! in the stem with the same
+parameters, e.g.:
+
+\begin{lstlisting}[language=]
+./gs status -s
+\end{lstlisting}
+
+%------------------------------------------------------------------------------
+\section{Install Git for Linux \label{sec:git.install.lin}}
+%------------------------------------------------------------------------------
+
+\tbc
+
+%------------------------------------------------------------------------------
+\section{How Git for Windows was downloaded }
+%------------------------------------------------------------------------------
+
+For the project, it is preferred that every participant uses the same version
+of tools. This also applies for Git. Therefore it is not preferred that
+participants download their 'own' or the newest version of a tool. Instead an
+installation CD (or an ISO image) is prepared, which contains all appropriate
+versions. So please use the CD instead of following instructions below. The
+instructions below are only included to be able to create a new version of the
+installation CD.
+
+\begin{itemize*}
+\item Date of download: May \nth{8}, 2014
+\end{itemize*}
+\begin{enumerate*}
+\item went to \url{http://msysgit.github.io/}
+\item pressed download
+\item The file !Git-1.9.2-preview20140411.exe! was downloaded
+\end{enumerate*}
+
+\noindent
+The !sendmail! utility was locally developed in C-sharp. The sources are
+archived in the repository !sendmail!.
+
+%------------------------------------------------------------------------------
+\section{How Git for Linux was downloaded }
+%------------------------------------------------------------------------------
+
+\tbc
+
+%------------------------------------------------------------------------------
+\section{Cloning an archive without flying start \label{sec:git.startnofly}}
+%------------------------------------------------------------------------------
+
+In case you haven't installed git yet, please follow instructions in
+\S\ref{sec:git.install.win} or \S\ref{sec:git.install.lin}
+from p\pageref{sec:git.install.win} onwards.
+
+\index{git clone ...}
+\index{git submodule update ...}
+\index{git checkout -b ...}
+
+\begin{enumerate*}
+\item Create a !src! directory
+\item !cd src!
+\item !git clone git@ubuntu:hackaton-1.git .!
+\item !git submodule update --rebase --init!
+\item !gs checkout -b my_work!
+\end{enumerate*}
+
+\index{gs}
+
+\noindent
+!./gs! will execute a !git! command with the given parameters in every
+submodule and after that it will execute !git! in the stem with the same
+parameters. !./gs! is to be executed in the stem.
+
+\noindent
+Note, !my_work! is the name of a newly created branch.
+
+%------------------------------------------------------------------------------
+\section{How the archive was setup for the first time}
+%------------------------------------------------------------------------------
+
+In the project, participants will use an existing archive. But for some
+future other project, the reader may need to set up an archive for himself.
+Therefor the log below is included about how the archive was setup for the
+first time. Also when new repositories are to be added to the archive, a part
+of the instruction below are relevant for the archive owner.
+
+First directories were created with source code and documentation. In the
+directory structure, the files that need to be under source control were
+separated from other files (like intermediate files, targets and tools).
+
+\begin{itemize*}
+\item For every submodule in the source tree:
+   \begin{itemize*}
+   \item !git init! $\Rightarrow$ this creates an empty archive
+   \item !git status -s! $\Rightarrow$ will show uncontrolled files
+   \item For files that must be added: !git add <filename1> <filename2> ...!
+   \item For files that are to be ignored create a file !.gitignore! and add
+         the filename to this file
+   \item !git add .gitignore! (when there is one)
+   \item !git commit -m "<some comments>"!
+   \end{itemize*}
+\item (first time only) Create an account for github
+\item For every submodule in the source tree:
+   \begin{itemize*}
+   \item Create an empty repository in github
+   \item !cd <your local repository>!
+   \item !git remote add origin <URL provided by github>!
+   \item !git push -u origin master!
+   \end{itemize*}
+\item Return to the initial source tree and delete all submodules with the
+      initially created repositories. Or move them away as backup.
+\item (first time only)
+   \begin{itemize*}
+   \item !git init! $\Rightarrow$ this creates the empty archive that is to
+         contain all submodules
+   \item !git submodule init! $\Rightarrow$ this creates the administration for
+         submodules
+   \end{itemize*}
+\item For every submodule in the source tree:
+   \begin{itemize*}
+   \item !git submodule add <URL provided by github> [directory]! $\Rightarrow$
+         to add repository to the stem and store it in ![directory]!.
+   \end{itemize*}
+\item !git commit -m "<some comments>"!
+\item (first time only)
+   \begin{itemize*}
+   \item !git submodule update! $\Rightarrow$ this updates the sources of all
+         submodules
+   \item Create an empty repository in github
+   \item !git remote add origin <URL provided by github>!
+   \item !git push -u origin master!
+   \item Now you can delete (or backup) the complete original source tree and
+         clone it freshly from the newly created archive
+   \end{itemize*}
+\end{itemize*}
+
+%------------------------------------------------------------------------------
+\section{About ssh}
+%------------------------------------------------------------------------------
+
+%..............................................................................
+\subsection{Creating \ix{ssh key} for github}
+
+Github is configured to use \ix{ssh} (\abbr{s}ecure \abbr{sh}ell)
+authentication. Ssh keys serve as a means of
+identifying yourself to github using public-key cryptography and 
+challenge-response authentication. One immediate advantage this method has over
+traditional password authentication is, that you can be authenticated by github
+without ever having to send your password over the network.
+
+In the bash shell type the following:
+
+\begin{lstlisting}[language=]
+ssh-keygen -t rsa -C "j.p.lammertink@kubicas.com"
+eval $(ssh-agent)
+ssh-add ~/.ssh/id_rsa
+clip < ~/.ssh/id_rsa.pub
+\end{lstlisting}
+
+\noindent
+The !clip! command will copy !~/.ssh/id_rsa.pub! to your clipboard.
+
+%..............................................................................
+\subsection{Typing the passphrase once}
+
+\index{SSH passphrase}
+
+In a single bash session, there is no need to type the passphrase any time ssh
+authentication is needed. Instead you can run the !ssh-agent!, which will
+remember your passphrase for the entire rest of the bash session.
+
+\begin{lstlisting}[language=]
+eval $(ssh-agent)
+ssh-add
+\end{lstlisting}
+
+\noindent
+!ssh-add! will ask for the passphrase.
